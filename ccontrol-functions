@@ -1,8 +1,13 @@
 #!/bin/bash
 #
-# $Id$
+# ccontrol-functions
 #
-# See <https://github.com/unix-junkie/ccontrol-scripts>
+# Include this file into your ~/.bashrc or /etc/bashrc.
+# Doesn't work in CYGWIN, as ccontrol utility behaviour
+# is totally different in Windows.
+# See <https://github.com/unix-junkie/ccontrol-scripts>.
+#
+# $Id$
 #
 # vim:ft=sh
 #
