@@ -114,6 +114,29 @@ function ccontrol-smp() {
 	fi
 }
 
+function ccontrol-doc() {
+	if [ $# -ne 1 ]
+	then
+		ccontrol-echo "Usage: $FUNCNAME <INSTANCE_NAME>"
+		return
+	fi
+	instance=`echo $1 | tr '[:lower:]' '[:upper:]'`
+	if ccontrol-exists? $instance
+	then
+		if ccontrol-running? $instance >/dev/null
+		then
+			port=`ccontrol-www-port $instance`
+			url="http://${HOSTNAME}:${port}/csp/docbook/DocBook.UI.HomePageZen.cls"
+			echo -e "\033[34;47;107;04m${url}\033[00m"
+			x-www-browser "${url}"
+		else
+			ccontrol-echo "$FUNCNAME: instance $instance isn't running"
+		fi
+	else
+		ccontrol-echo "$FUNCNAME: instance $instance doesn't exist"
+	fi
+}
+
 function ccontrol-add-namespace() {
 	if [ $# -lt 2 -o $# -gt 3 ]
 	then
