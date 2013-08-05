@@ -10,7 +10,11 @@
 # vim:ft=sh
 #
 
-export JAVA_HOME='/Library/Java/JavaVirtualMachines/1.6.0_39-b04-443.jdk/Contents/Home'
+if [ -z "${JAVA_HOME}" ]
+then
+	java_version=$(ls -1 /Library/Java/JavaVirtualMachines | sort | tail -n1)
+	export JAVA_HOME="/Library/Java/JavaVirtualMachines/${java_version}/Contents/Home"
+fi
 export JRE_HOME="${JAVA_HOME}/jre"
 
 RUN_AS_USER='ashcheglov'
