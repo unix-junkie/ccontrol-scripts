@@ -20,7 +20,7 @@
 # Description: Starts the InterSystems Java Gateway
 ### END INIT INFO
 
-#. /etc/rc.d/init.d/functions
+. /etc/rc.d/init.d/functions
 
 [ -f /etc/sysconfig/ISCJavaGateway ] && . /etc/sysconfig/ISCJavaGateway
 
