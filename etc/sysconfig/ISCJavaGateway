@@ -1,0 +1,11 @@
+#
+# /etc/sysconfig/ISCJavaGateway
+#
+# vim:ft=sh:
+#
+
+GATEWAY_PORT=55555
+GATEWAY_LOGGING_ENABLED='yes'
+JMX_ENABLED='yes'
+VMARGS="-server -Djava.awt.headless=true -Dfile.encoding=$(locale charmap) -Xrs -Xss8m -XX:+UseConcMarkSweepGC -XX:+CMSClassUnloadingEnabled"
+XTRA_CLASSPATH=''

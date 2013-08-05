@@ -1,0 +1,150 @@
+#!/bin/sh
+#
+# ISCJavaGateway	Starts the InterSystems Java Gateway
+#
+# chkconfig: 35 55 25
+# description: Starts the InterSystems Java Gateway
+# 
+# processname: java
+# config: /etc/sysconfig/ISCJavaGateway
+#
+### BEGIN INIT INFO
+# Provides: ISCJavaGateway
+# Required-Start: $local_fs $network
+# Required-Stop: $local_fs
+# Should-Start:
+# Should-Stop: $network
+# Default-Start: 3 5
+# Default-Stop: 0 1 2 4 6
+# Short-Description: Starts the InterSystems Java Gateway
+# Description: Starts the InterSystems Java Gateway
+### END INIT INFO
+
+#. /etc/rc.d/init.d/functions
+
+[ -f /etc/sysconfig/ISCJavaGateway ] && . /etc/sysconfig/ISCJavaGateway
+
+RETVAL=0
+prog="$(basename $0)"
+pidfile="/var/run/${prog}.pid"
+lockfile="/var/lock/subsys/${prog}"
+user='cacheusr'
+
+JAVA='/usr/bin/java'
+CCONTROL='/usr/bin/ccontrol'
+GATEWAY_CLASS_NAME='com.intersys.gateway.JavaGateway'
+GATEWAY_LOG_FILE="/var/log/${prog}.log"
+
+classpath()
+{
+	GLOBALS_HOME="$(${CCONTROL} qlist | head -n1 | cut -d^ -f2)"
+	classpath_entries=($(find "${GLOBALS_HOME}/dev/java/lib/JDK16" -type f -iname '*\.jar'))
+	(IFS=':'; echo "${classpath_entries[*]}")
+}
+
+vmargs()
+{
+	if [ -n "${JMX_ENABLED}" -a "$(echo "${JMX_ENABLED}" | tr [:upper:] [:lower:])" = 'yes' ]
+	then
+		JMX_PORT=$((58700 + $((${GATEWAY_PORT} % 100))))
+		VMARGS="${VMARGS} -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=${JMX_PORT} -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"
+	fi
+
+	CLASSPATH="$(classpath)"
+	if [ -n "${XTRA_CLASSPATH}" ]
+	then
+		CLASSPATH="${CLASSPATH}:${XTRA_CLASSPATH}"
+	fi
+
+	VMARGS="${VMARGS} -classpath ${CLASSPATH} ${GATEWAY_CLASS_NAME} ${GATEWAY_PORT}"
+	if [ -n "${GATEWAY_LOGGING_ENABLED}" -a "$(echo "${GATEWAY_LOGGING_ENABLED}" | tr [:upper:] [:lower:])" = 'yes' ]
+	then
+		VMARGS="${VMARGS} ${GATEWAY_LOG_FILE}"
+		touch "${GATEWAY_LOG_FILE}"
+		chown "${user}" "${GATEWAY_LOG_FILE}"
+	fi
+
+	echo "${VMARGS}"
+}
+
+start()
+{
+	[ -x "${JAVA}" -a -n "${GATEWAY_PORT}" ] || exit 5
+	echo -n $"Starting ${prog}: "
+	touch "${pidfile}"
+	chown "${user}" "${pidfile}"
+	daemon --user=${user} --pidfile=${pidfile} "${JAVA} $(vmargs) & echo \$! >${pidfile}"
+	RETVAL=$?
+	[ ${RETVAL} -eq 0 ] && touch "${lockfile}"
+	echo
+	return ${RETVAL}
+}
+
+stop()
+{
+	echo -n $"Stopping ${prog}: "
+	killproc -p "${pidfile}" "${prog}"
+	RETVAL=$?
+	[ ${RETVAL} -eq 0 ] && rm -f "${lockfile}"
+	echo
+}
+
+restart()
+{
+	stop
+	start
+}
+
+rh_status() {
+	status -p "${pidfile}" -l "${lockfile}" "${prog}"
+}
+
+rh_status_q() {
+	rh_status >/dev/null 2>&1
+}
+
+case "$1" in
+	start)
+		rh_status_q && exit 0
+		start
+		;;
+	stop)
+		if ! rh_status_q
+		then
+			rm -f "${lockfile}"
+			exit 0
+		fi
+		stop
+		;;
+	restart)
+		restart
+		;;
+	condrestart|try-restart)
+		rh_status_q || exit 0
+		if [ -f "${lockfile}" ]
+		then
+			if [ ${RETVAL} -eq 0 ]
+			then
+				stop
+				# avoid race
+				sleep 3
+				start
+			else
+				RETVAL=6
+			fi
+		fi
+		;;
+	status)
+		rh_status
+		RETVAL=$?
+		if [ ${RETVAL} -eq 3 -a -f "${lockfile}" ]
+		then
+			RETVAL=2
+		fi
+		;;
+	*)
+		echo $"Usage: ${prog} {start|stop|restart|condrestart|try-restart|status}"
+		;;
+esac
+
+exit ${RETVAL}
