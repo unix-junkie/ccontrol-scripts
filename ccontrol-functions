@@ -173,3 +173,26 @@ function x-www-browser() {
 		;;
 	esac
 }
+
+function ccontrol-mvn-install() {
+	if [ $# -ne 1 ]
+	then
+		ccontrol-echo "Usage: $FUNCNAME <INSTANCE_NAME>"
+		return
+	fi
+	instance=`echo $1 | tr '[:lower:]' '[:upper:]'`
+	if ccontrol-exists? $instance
+	then
+		cache_home=$(ccontrol qlist | grep "^${instance}\\b\\^" | cut -d^ -f2)
+		cache_version=$(ccontrol qlist | grep "^${instance}\\b\\^" | cut -d^ -f3)
+		for jar in $(ls -1 "${cache_home}/dev/java/lib/JDK16"/{CacheDB,cachedb,cacheextreme,cachegateway,cachejdbc,habanero}.jar 2>/dev/null)
+		do
+		    group_id='com.intersystems'
+		    artifact_id=$(basename "${jar}" | sed 's/\.jar$//g' | tr [:upper:] [:lower:])
+		    packaging='jar'
+		    mvn install:install-file -DgroupId="${group_id}" -DartifactId="${artifact_id}" -Dversion="${cache_version}" -Dpackaging="${packaging}" -Dfile="${jar}"
+		done
+	else
+		ccontrol-echo "$FUNCNAME: instance $instance doesn't exist"
+	fi
+}
