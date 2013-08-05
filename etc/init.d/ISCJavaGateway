@@ -25,7 +25,7 @@
 [ -f /etc/sysconfig/ISCJavaGateway ] && . /etc/sysconfig/ISCJavaGateway
 
 RETVAL=0
-prog="$(basename $0)"
+prog="$(basename $([ -L "$0" ] && readlink "$0" || echo "$0"))"
 pidfile="/var/run/${prog}.pid"
 lockfile="/var/lock/subsys/${prog}"
 user='cacheusr'
