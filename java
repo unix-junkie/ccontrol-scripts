@@ -10,11 +10,18 @@
 # vim:ft=sh
 #
 
-if [ -z "${JAVA_HOME}" ]
-then
-	java_version=$(ls -1 /Library/Java/JavaVirtualMachines | sort | tail -n1)
-	export JAVA_HOME="/Library/Java/JavaVirtualMachines/${java_version}/Contents/Home"
-fi
+# We shouldn't rely on the externally set JAVA_HOME, as this script may erroneously call itself.
+# Instead, provide OS-specific Java detection code.
+case "$(uname -s)" in
+	'Darwin')
+		java_version=$(ls -1 /Library/Java/JavaVirtualMachines | sort | tail -n1)
+		export JAVA_HOME="/Library/Java/JavaVirtualMachines/${java_version}/Contents/Home"
+		;;
+	*)
+		echo "$(uname -s) not yet supported."
+		exit 1
+		;;
+esac
 export JRE_HOME="${JAVA_HOME}/jre"
 
 RUN_AS_USER='ashcheglov'
