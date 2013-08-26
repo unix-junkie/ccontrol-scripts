@@ -14,7 +14,7 @@
 # Instead, provide OS-specific Java detection code.
 case "$(uname -s)" in
 	'Darwin')
-		java_version=$(ls -1 /Library/Java/JavaVirtualMachines | sort | tail -n1)
+		java_version=$(basename $(ls -d1 /Library/Java/JavaVirtualMachines/1.6.0_*-b*-*.jdk | sort | tail -n1))
 		export JAVA_HOME="/Library/Java/JavaVirtualMachines/${java_version}/Contents/Home"
 		;;
 	*)
