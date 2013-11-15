@@ -1,0 +1,136 @@
+#!/bin/bash
+#
+### BEGIN INIT INFO
+# Provides: Cache
+# Required-Start: ISCAgent
+# Default-Start: 3 5
+# Default-Stop: 0 1 2 6
+# Short-Description: Starts Cache/Ensemble instances
+# Description: Starts Cache/Ensemble instances
+### END INIT INFO
+#
+# vim:ft=sh
+#
+
+CCONTROL='/usr/bin/ccontrol'
+
+agent_status() {
+	if [ -x /etc/init.d/ISCAgent ]
+	then
+		/etc/init.d/ISCAgent status >/dev/null 2>&1
+		agent_status=$?
+		if [ ${agent_status} -ne 0 ]
+		then
+			echo "ERROR: ISCAgent is down"
+		fi
+		return ${agent_status}
+	else
+		echo "ERROR: ISCAgent startup script doesn't exist; can't check ISCAgent status"
+		return 1
+	fi
+}
+
+list_instances() {
+	"${CCONTROL}" qlist 2>/dev/null | cut -d'^' -f1
+}
+
+start() {
+	agent_status
+	status=$?
+	if [ ${status} -ne 0 ]
+	then
+		echo "ERROR: ISCAgent is down; unable to start Cache"
+		return ${status}
+	fi
+
+	for instance_name in `list_instances`
+	do
+		"${CCONTROL}" start "${instance_name}"
+		status=$?
+		if [ ${status} -ne 0 ]
+		then
+			echo "ERROR: failed to start Cache instance ${instance_name} (or it's already running)"
+			return ${status}
+		fi
+	done
+
+	return 0
+}
+
+stop() {
+	for instance_name in `list_instances`
+	do
+		"${CCONTROL}" stop "${instance_name}" quietly
+		status=$?
+		if [ ${status} -ne 0 ]
+		then
+			echo "ERROR: failed to stop Cache instance ${instance_name} (or it's already down)"
+			return ${status}
+		fi
+	done
+
+	return 0
+}
+
+restart() {
+	stop
+	status=$?
+	if [ ${status} -ne 0 ]
+	then
+		echo "ERROR: Cache instance(s) failed to stop."
+		return ${status}
+	fi
+
+	start
+	status=$?
+	if [ ${status} -ne 0 ]
+	then
+		echo "ERROR: Cache instance(s) failed to start."
+	fi
+
+	return ${status}
+}
+
+status() {
+	"${CCONTROL}" list
+	# Returns success regardless of Cache instance(s) status
+	return 0
+}
+
+usage() {
+	echo "Usage: `basename $0` {start|stop|restart|status|help}"
+	return 0
+}
+
+if [ $# -ne 1 ]
+then
+	usage
+	exit 1
+fi
+
+case "$1" in
+	start)
+		start
+		exit $?
+		;;
+	stop)
+		stop
+		exit $?
+		;;
+	restart)
+		restart
+		exit $?
+		;;
+	status)
+		status
+		exit $?
+		;;
+	help)
+		usage
+		exit $?
+		;;
+	*)
+		usage
+		exit 1
+		;;
+esac
