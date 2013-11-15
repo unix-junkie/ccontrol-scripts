@@ -35,7 +35,7 @@ function ccontrol-www-port() {
 		return 1
 	fi
 	instance=`echo $1 | tr '[:lower:]' '[:upper:]'`
-	if ccontrol-exists? $instance
+	if ccontrol-exists?() $instance
 	then
 		ccontrol qlist | grep "^$instance\b\^" | cut -d^ -f7
 		return 0
@@ -51,7 +51,7 @@ function ccontrol-running?() {
 		return 1
 	fi
 	instance=`echo $1 | tr '[:lower:]' '[:upper:]'`
-	if ccontrol-exists? $instance
+	if ccontrol-exists?() $instance
 	then
 		status=`ccontrol qlist | grep "^$instance\b\^" | cut -d^ -f4 | cut -d, -f1`
 		case "${status}" in
@@ -98,9 +98,9 @@ function ccontrol-smp() {
 		return
 	fi
 	instance=`echo $1 | tr '[:lower:]' '[:upper:]'`
-	if ccontrol-exists? $instance
+	if ccontrol-exists?() $instance
 	then
-		if ccontrol-running? $instance >/dev/null
+		if ccontrol-running?() $instance >/dev/null
 		then
 			port=`ccontrol-www-port $instance`
 			url="http://${HOSTNAME}:${port}/csp/sys/UtilHome.csp"
@@ -121,9 +121,9 @@ function ccontrol-doc() {
 		return
 	fi
 	instance=`echo $1 | tr '[:lower:]' '[:upper:]'`
-	if ccontrol-exists? $instance
+	if ccontrol-exists?() $instance
 	then
-		if ccontrol-running? $instance >/dev/null
+		if ccontrol-running?() $instance >/dev/null
 		then
 			port=`ccontrol-www-port $instance`
 			url="http://${HOSTNAME}:${port}/csp/docbook/DocBook.UI.HomePageZen.cls"
@@ -144,9 +144,9 @@ function ccontrol-add-namespace() {
 		return
 	fi
 	instance=`echo $1 | tr '[:lower:]' '[:upper:]'`
-	if ccontrol-exists? $instance
+	if ccontrol-exists?() $instance
 	then
-		if ccontrol-running? $instance >/dev/null
+		if ccontrol-running?() $instance >/dev/null
 		then
 			[ $# -eq 2 ] && database='USER' || database="$3"
 			# The default user should NOT have a startup namespace set,
@@ -181,7 +181,7 @@ function ccontrol-mvn-install() {
 		return
 	fi
 	instance=`echo $1 | tr '[:lower:]' '[:upper:]'`
-	if ccontrol-exists? $instance
+	if ccontrol-exists?() $instance
 	then
 		cache_home=$(ccontrol qlist | grep "^${instance}\\b\\^" | cut -d^ -f2)
 		cache_version=$(ccontrol qlist | grep "^${instance}\\b\\^" | cut -d^ -f3)
