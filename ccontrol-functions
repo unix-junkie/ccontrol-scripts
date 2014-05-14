@@ -16,7 +16,7 @@ function ccontrol-echo() {
 	echo -e "\033[37;97;44;01m${*}\033[0m"
 }
 
-function ccontrol-exists?() {
+function ccontrol-exists() {
 	if [ $# -ne 1 ]
 	then
 		ccontrol-echo "Usage: $FUNCNAME <INSTANCE_NAME>"
@@ -25,7 +25,7 @@ function ccontrol-exists?() {
 	ccontrol qlist | grep "^$instance\b\^" >/dev/null && return 0 || return 1
 }
 
-function ccontrol-running() {
+function ccontrol-list-running() {
 	ccontrol qlist | grep 'running'
 }
 
@@ -35,7 +35,7 @@ function ccontrol-www-port() {
 		return 1
 	fi
 	instance=`echo $1 | tr '[:lower:]' '[:upper:]'`
-	if ccontrol-exists?() $instance
+	if ccontrol-exists $instance
 	then
 		ccontrol qlist | grep "^$instance\b\^" | cut -d^ -f7
 		return 0
@@ -44,14 +44,14 @@ function ccontrol-www-port() {
 	fi
 }
 
-function ccontrol-running?() {
+function ccontrol-is-running() {
 	if [ $# -ne 1 ]
 	then
 		ccontrol-echo "Usage: $FUNCNAME <INSTANCE_NAME>"
 		return 1
 	fi
 	instance=`echo $1 | tr '[:lower:]' '[:upper:]'`
-	if ccontrol-exists?() $instance
+	if ccontrol-exists $instance
 	then
 		status=`ccontrol qlist | grep "^$instance\b\^" | cut -d^ -f4 | cut -d, -f1`
 		case "${status}" in
@@ -79,7 +79,7 @@ function ccontrol-running?() {
 function ccontrol-stop() {
 	motto="Cach`echo 'é' | iconv -f 'UTF-8'`"
 	ccontrol-echo "${motto} stopping..."
-	ccontrol-running | cut -d^ -f1 | sed 's/$/ quietly/' | xargs -n2 -rt ccontrol stop
+	ccontrol-list-running | cut -d^ -f1 | sed 's/$/ quietly/' | xargs -n2 -rt ccontrol stop
 	ccontrol-echo "${motto} stopped."
 }
 
@@ -87,7 +87,7 @@ function ccontrol-start() {
 	motto="Cach`echo 'é' | iconv -f 'UTF-8'`"
 	ccontrol-echo "${motto} starting..."
 	ccontrol qlist | grep -v 'running' | cut -d^ -f1 | sed 's/$/ quietly/' | xargs -n2 -rp ccontrol start >/dev/null
-	ccontrol-running
+	ccontrol-list-running
 	ccontrol-echo "${motto} started."
 }
 
@@ -98,9 +98,9 @@ function ccontrol-smp() {
 		return
 	fi
 	instance=`echo $1 | tr '[:lower:]' '[:upper:]'`
-	if ccontrol-exists?() $instance
+	if ccontrol-exists $instance
 	then
-		if ccontrol-running?() $instance >/dev/null
+		if ccontrol-is-running $instance >/dev/null
 		then
 			port=`ccontrol-www-port $instance`
 			url="http://${HOSTNAME}:${port}/csp/sys/UtilHome.csp"
@@ -121,9 +121,9 @@ function ccontrol-doc() {
 		return
 	fi
 	instance=`echo $1 | tr '[:lower:]' '[:upper:]'`
-	if ccontrol-exists?() $instance
+	if ccontrol-exists $instance
 	then
-		if ccontrol-running?() $instance >/dev/null
+		if ccontrol-is-running $instance >/dev/null
 		then
 			port=`ccontrol-www-port $instance`
 			url="http://${HOSTNAME}:${port}/csp/docbook/DocBook.UI.HomePageZen.cls"
@@ -144,9 +144,9 @@ function ccontrol-add-namespace() {
 		return
 	fi
 	instance=`echo $1 | tr '[:lower:]' '[:upper:]'`
-	if ccontrol-exists?() $instance
+	if ccontrol-exists $instance
 	then
-		if ccontrol-running?() $instance >/dev/null
+		if ccontrol-is-running $instance >/dev/null
 		then
 			[ $# -eq 2 ] && database='USER' || database="$3"
 			# The default user should NOT have a startup namespace set,
@@ -181,7 +181,7 @@ function ccontrol-mvn-install() {
 		return
 	fi
 	instance=`echo $1 | tr '[:lower:]' '[:upper:]'`
-	if ccontrol-exists?() $instance
+	if ccontrol-exists $instance
 	then
 		cache_home=$(ccontrol qlist | grep "^${instance}\\b\\^" | cut -d^ -f2)
 		cache_version=$(ccontrol qlist | grep "^${instance}\\b\\^" | cut -d^ -f3)
