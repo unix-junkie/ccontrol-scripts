@@ -185,7 +185,7 @@ function ccontrol-mvn-install() {
 	then
 		cache_home=$(ccontrol qlist | grep "^${instance}\\b\\^" | cut -d^ -f2)
 		cache_version=$(ccontrol qlist | grep "^${instance}\\b\\^" | cut -d^ -f3)
-		for jar in $(ls -1 "${cache_home}/dev/java/lib/JDK16"/{CacheDB,cachedb,cacheextreme,cachegateway,cachejdbc,habanero}.jar 2>/dev/null)
+		for jar in $(ls -1 "${cache_home}/dev/java/lib/JDK17"/{CacheDB,cachedb,cacheextreme,cachegateway,cachejdbc,habanero}.jar 2>/dev/null)
 		do
 		    group_id='com.intersystems'
 		    artifact_id=$(basename "${jar}" | sed 's/\.jar$//g' | tr [:upper:] [:lower:])
